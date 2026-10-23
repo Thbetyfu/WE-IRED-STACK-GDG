@@ -1,0 +1,9 @@
+# Ignore everything
+/*
+
+# Allow Doc directory and its contents
+!/Doc/
+!/Doc/**
+
+# Allow .gitignore
+!.gitignore
