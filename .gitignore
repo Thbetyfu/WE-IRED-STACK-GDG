@@ -1,9 +1,65 @@
-# Ignore everything
-/*
+# ===== Bahan referensi lokal (tidak masuk repo) =====
+/Ide/
+/Handbook STACK 2026.pdf
+*.apk
+*.zip
 
-# Allow Doc directory and its contents
-!/Doc/
-!/Doc/**
+# ===== Rahasia (JANGAN PERNAH DI-COMMIT) =====
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+key.properties
+google-services.json
+GoogleService-Info.plist
+service-account*.json
+firebase-adminsdk*.json
+*.pem
+*.key
+snapshot*.enc
 
-# Allow .gitignore
-!.gitignore
+# ===== Flutter / Dart =====
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+**/android/.gradle/
+**/android/local.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/ios/Pods/
+**/ios/Flutter/Generated.xcconfig
+*.g.dart.bak
+pubspec_overrides.yaml
+
+# ===== Go =====
+backend/bin/
+*.exe
+*.test
+*.out
+coverage.*
+
+# ===== PlatformIO / firmware =====
+.pio/
+firmware/**/.vscode/.browse.c_cpp.db*
+firmware/**/.vscode/c_cpp_properties.json
+firmware/**/.vscode/launch.json
+
+# ===== Docker / data lokal =====
+deploy/data/
+pgdata/
+ollama/
+
+# ===== IDE & OS =====
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+desktop.ini

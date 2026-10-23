@@ -174,7 +174,7 @@ Docker & Docker Compose, Caddy (TLS otomatis), GitHub Actions (lint, uji, gitlea
 ### 4.1 Struktur Repositori
 
 ```
-we-ired/
+RESQUE-STACK-GDG/
 ├── apps/
 │   ├── warga/              # Aplikasi Warga (Flutter Android)
 │   ├── relawan/            # Aplikasi Relawan (Flutter Android)
@@ -191,11 +191,14 @@ we-ired/
 │   ├── db/queries/         # query sqlc
 │   └── tools/seed/         # generator data sintetis
 ├── firmware/beacon/        # PlatformIO project
+├── hardware/               # BOM aktual, wiring, casing, laporan uji beacon
 ├── deploy/
 │   ├── docker-compose.cloud.yml
 │   ├── docker-compose.posko.yml
 │   └── Caddyfile
 ├── docs/                   # PRD, SRS, SDD, HRD
+│   └── test-vectors/       # vektor uji protokol (Dart, Go, firmware)
+├── Pembagian fitur.md      # pembagian tugas tim
 └── README.md
 ```
 
