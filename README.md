@@ -42,7 +42,7 @@ WE-IRED membantu pengurus RT dan relawan mendata warga rentan, menetapkan titik 
 ## 🗂️ Struktur Folder
 
 ```
-RESQUE-STACK-GDG/
+WE-IRED-STACK-GDG/
 ├── README.md                 ← dokumen ini
 ├── Pembagian fitur.md        ← pembagian tugas tim
 ├── .gitignore
@@ -105,11 +105,11 @@ Folder yang masih kosong berisi `.gitkeep` agar tetap ter-commit ke Git. Hapus `
 > Perintah di bawah adalah **rencana** dan akan berlaku setelah proyek masing-masing diinisialisasi. Perbarui bagian ini saat setup sebenarnya sudah jadi.
 
 ```bash
-git clone https://github.com/Thbetyfu/RESQUE-STACK-GDG.git
+git clone https://github.com/Thbetyfu/WE-IRED-STACK-GDG.git
 ```
 
 ```bash
-cd RESQUE-STACK-GDG && melos bootstrap
+cd WE-IRED-STACK-GDG && melos bootstrap
 ```
 
 **Backend (lokal):**

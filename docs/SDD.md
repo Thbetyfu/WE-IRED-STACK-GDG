@@ -174,7 +174,7 @@ Docker & Docker Compose, Caddy (TLS otomatis), GitHub Actions (lint, uji, gitlea
 ### 4.1 Struktur Repositori
 
 ```
-RESQUE-STACK-GDG/
+WE-IRED-STACK-GDG/
 ├── apps/
 │   ├── warga/              # Aplikasi Warga (Flutter Android)
 │   ├── relawan/            # Aplikasi Relawan (Flutter Android)
