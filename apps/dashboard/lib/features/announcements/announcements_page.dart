@@ -2,15 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:core/core.dart';
+import 'package:ui/ui.dart';
 
 import '../../app/auth_provider.dart';
 import 'announcements_provider.dart';
 
-class AnnouncementsPage extends ConsumerWidget {
+class AnnouncementsPage extends ConsumerStatefulWidget {
   const AnnouncementsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AnnouncementsPage> createState() => _AnnouncementsPageState();
+}
+
+class _AnnouncementsPageState extends ConsumerState<AnnouncementsPage> {
+  String _levelFilter = 'all';
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final annState = ref.watch(announcementsProvider);
     final annNotifier = ref.read(announcementsProvider.notifier);
@@ -20,6 +28,13 @@ class AnnouncementsPage extends ConsumerWidget {
     // Filter active announcements only per rule (FR-ANN-01..04)
     final activeList = annState.announcements.where((a) => !a.isExpired).toList();
 
+    final filteredList = activeList.where((a) {
+      if (_levelFilter == 'darurat') return a.level == AnnouncementLevel.darurat;
+      if (_levelFilter == 'penting') return a.level == AnnouncementLevel.penting;
+      if (_levelFilter == 'info') return a.level == AnnouncementLevel.info;
+      return true;
+    }).toList();
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
@@ -28,33 +43,27 @@ class AnnouncementsPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Page Header
-            Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Pusat Siaran Pengumuman Darurat: $rtName',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Editor siaran pengumuman 160 karakter bertanda tangan Ed25519 dan distribusi multi-jalur (FCM, WhatsApp, BLE Mesh Relay).',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                    ),
-                  ],
+            OperationalPageHeader(
+              title: 'Pusat Siaran Pengumuman: $rtName',
+              subtitle: 'Editor siaran pengumuman 160 karakter bertanda tangan Ed25519 dan distribusi multi-jalur (FCM, WhatsApp, BLE Mesh Relay).',
+              statusBadge: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
                 ),
-                const Spacer(),
-                IconButton(
+                child: Text(
+                  '${activeList.length} Siaran Aktif',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E40AF)),
+                ),
+              ),
+              actions: [
+                IconButton.outlined(
                   tooltip: 'Segarkan data',
-                  icon: const Icon(Icons.refresh, color: Color(0xFF475569)),
+                  icon: const Icon(Icons.refresh, size: 20),
                   onPressed: () => annNotifier.loadAnnouncements(rtId),
                 ),
-                const SizedBox(width: 8),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1E3A8A),
@@ -67,11 +76,11 @@ class AnnouncementsPage extends ConsumerWidget {
                     'Buat Pengumuman Baru',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  onPressed: () => _showCreateAnnouncementDialog(context, ref, rtId),
+                  onPressed: () => _showCreateAnnouncementDialog(context, rtId),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Cryptographic Security Banner (SDD 7.6 & 9.1)
             Container(
@@ -94,7 +103,46 @@ class AnnouncementsPage extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+
+            // Filter Chips Toolbar
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                const Text('Tingkat:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+                FilterChip(
+                  label: Text('Semua (${activeList.length})', style: const TextStyle(fontSize: 12)),
+                  selected: _levelFilter == 'all',
+                  onSelected: (_) => setState(() => _levelFilter = 'all'),
+                  selectedColor: const Color(0xFFDBEAFE),
+                  checkmarkColor: const Color(0xFF1E40AF),
+                ),
+                FilterChip(
+                  label: const Text('Darurat', style: TextStyle(fontSize: 12)),
+                  selected: _levelFilter == 'darurat',
+                  onSelected: (_) => setState(() => _levelFilter = 'darurat'),
+                  selectedColor: const Color(0xFFFEE2E2),
+                  checkmarkColor: const Color(0xFFDC2626),
+                ),
+                FilterChip(
+                  label: const Text('Penting', style: TextStyle(fontSize: 12)),
+                  selected: _levelFilter == 'penting',
+                  onSelected: (_) => setState(() => _levelFilter = 'penting'),
+                  selectedColor: const Color(0xFFFEF3C7),
+                  checkmarkColor: const Color(0xFFD97706),
+                ),
+                FilterChip(
+                  label: const Text('Info', style: TextStyle(fontSize: 12)),
+                  selected: _levelFilter == 'info',
+                  onSelected: (_) => setState(() => _levelFilter = 'info'),
+                  selectedColor: const Color(0xFFEFF6FF),
+                  checkmarkColor: const Color(0xFF2563EB),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
             // Active Announcements List or Empty State
             if (annState.isLoading)
@@ -105,10 +153,24 @@ class AnnouncementsPage extends ConsumerWidget {
                 ),
               )
             else if (activeList.isEmpty)
-              _buildEmptyState()
+              EmptyStateView(
+                icon: Icons.campaign_outlined,
+                title: 'Belum Ada Pengumuman Aktif di RT Ini',
+                description: 'Pengumuman darurat, penting, atau informasi posko yang disiarkan oleh pengurus akan muncul di sini dan disinkronkan ke seluruh warga.',
+                actionLabel: 'Buat Pengumuman Baru',
+                onAction: () => _showCreateAnnouncementDialog(context, rtId),
+              )
+            else if (filteredList.isEmpty)
+              EmptyStateView(
+                icon: Icons.filter_alt_off_outlined,
+                title: 'Tidak Ada Pengumuman Pada Kategori Ini',
+                description: 'Tidak ada siaran pengumuman aktif dengan filter tingkat $_levelFilter.',
+                actionLabel: 'Tampilkan Semua',
+                onAction: () => setState(() => _levelFilter = 'all'),
+              )
             else
               Column(
-                children: activeList.map((ann) => _AnnouncementCard(announcement: ann)).toList(),
+                children: filteredList.map((ann) => _AnnouncementCard(announcement: ann)).toList(),
               ),
           ],
         ),
@@ -116,40 +178,7 @@ class AnnouncementsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Card(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 64),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.campaign_outlined, size: 64, color: Color(0xFF94A3B8)),
-              const SizedBox(height: 16),
-              const Text(
-                'Belum Ada Pengumuman Aktif di RT Ini',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-              ),
-              const SizedBox(height: 8),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
-                child: const Text(
-                  'Pengumuman darurat, penting, atau informasi posko yang disiarkan oleh pengurus akan muncul di sini dan disinkronkan ke seluruh warga.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.5),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showCreateAnnouncementDialog(BuildContext context, WidgetRef ref, String rtId) {
+  void _showCreateAnnouncementDialog(BuildContext context, String rtId) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -205,56 +234,64 @@ class _AnnouncementCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Top Meta Row
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: badgeBg,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(badgeIcon, size: 14, color: badgeText),
-                      const SizedBox(width: 6),
-                      Text(
-                        badgeLabel,
-                        style: TextStyle(
-                          color: badgeText,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: badgeBg,
+                        borderRadius: BorderRadius.circular(6),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                // Ed25519 Verified Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFA7F3D0)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.shield_outlined, size: 12, color: Color(0xFF059669)),
-                      SizedBox(width: 4),
-                      Text(
-                        'Ed25519 Valid',
-                        style: TextStyle(
-                          color: Color(0xFF059669),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(badgeIcon, size: 14, color: badgeText),
+                          const SizedBox(width: 6),
+                          Text(
+                            badgeLabel,
+                            style: TextStyle(
+                              color: badgeText,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Ed25519 Verified Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.shield_outlined, size: 12, color: Color(0xFF059669)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Ed25519 Valid',
+                            style: TextStyle(
+                              color: Color(0xFF059669),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
                 Text(
                   'Berlaku s/d $expiresStr WIB',
                   style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
@@ -278,17 +315,18 @@ class _AnnouncementCard extends StatelessWidget {
             const SizedBox(height: 14),
 
             // Distribution Channels & Short ID
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Text(
                   'Kanal Distribusi: ',
                   style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
                 ),
-                const SizedBox(width: 6),
                 ...announcement.channels.map((ch) => _ChannelPill(channel: ch)),
-                const Spacer(),
                 Text(
-                  'ID Pendek: ${announcement.shortId}',
+                  '• ID Pendek: ${announcement.shortId}',
                   style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontFamily: 'monospace'),
                 ),
               ],

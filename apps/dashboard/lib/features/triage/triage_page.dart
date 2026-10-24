@@ -103,45 +103,31 @@ class _TriagePageState extends ConsumerState<TriagePage> with SingleTickerProvid
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Main Table Content
-          Expanded(
-            flex: triageState.selectedItem != null ? 7 : 10,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Page Header
-                  Row(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Tabel Triase & Prioritas: $currentRT',
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Prioritas bantuan berbasis skor U+V+W+N+D backend (FR-DSH-03, FR-PRI-04).',
-                            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      IconButton.outlined(
-                        tooltip: 'Muat ulang data triase',
-                        icon: const Icon(Icons.refresh, size: 20),
-                        onPressed: () => notifier.loadTriageData(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 1050;
+          final showSidePanel = isWide && triageState.selectedItem != null;
 
-                  // Search and Filters Bar
+          final mainTableContent = Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Page Header
+                OperationalPageHeader(
+                  title: 'Tabel Triase & Prioritas: $currentRT',
+                  subtitle: 'Prioritas bantuan berbasis skor U+V+W+N+D backend (FR-DSH-03, FR-PRI-04).',
+                  actions: [
+                    IconButton.outlined(
+                      tooltip: 'Muat ulang data triase',
+                      icon: const Icon(Icons.refresh, size: 20),
+                      onPressed: () => notifier.loadTriageData(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Search and Filters Bar
                   Card(
                     color: Colors.white,
                     elevation: 0,
@@ -262,7 +248,7 @@ class _TriagePageState extends ConsumerState<TriagePage> with SingleTickerProvid
                                   DropdownMenuItem(value: 'all', child: Text('Semua Kanal')),
                                   DropdownMenuItem(value: 'aplikasi', child: Text('Aplikasi')),
                                   DropdownMenuItem(value: 'whatsapp', child: Text('WhatsApp')),
-                                  DropdownMenuItem(value: 'relay', child: Text('Relay LoRa')),
+                                  DropdownMenuItem(value: 'relay', child: Text('Relay BLE / Mesh')),
                                   DropdownMenuItem(value: 'relawan', child: Text('Relawan')),
                                   DropdownMenuItem(value: 'belum', child: Text('Belum Lapor')),
                                 ],
@@ -297,6 +283,30 @@ class _TriagePageState extends ConsumerState<TriagePage> with SingleTickerProvid
                           ),
                         ],
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Formula Legend Strip (SDD 6.1)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.functions, size: 16, color: Color(0xFF1E3A8A)),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Formula Skor SDD 6.1: P = U (Maks 40) + V (Maks 24) + W (Maks 20) + N (Maks 10) + D (Maks 6) • Rentang 0–100',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -336,30 +346,64 @@ class _TriagePageState extends ConsumerState<TriagePage> with SingleTickerProvid
                   ),
                 ],
               ),
-            ),
-          ),
+            );
 
-          // Side Detail Panel
-          if (triageState.selectedItem != null)
-            Expanded(
-              flex: 4,
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(left: BorderSide(color: Color(0xFFE2E8F0))),
+          if (isWide) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: showSidePanel ? 7 : 10,
+                  child: mainTableContent,
                 ),
-                child: _buildDetailPanel(triageState.selectedItem!, notifier),
-              ),
-            ),
-        ],
+                if (showSidePanel)
+                  Expanded(
+                    flex: 4,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        border: Border(left: BorderSide(color: Color(0xFFE2E8F0))),
+                      ),
+                      child: _buildDetailPanel(triageState.selectedItem!, notifier),
+                    ),
+                  ),
+              ],
+            );
+          }
+
+          // Tablet / compact view
+          if (triageState.selectedItem != null) {
+            return Column(
+              children: [
+                Expanded(flex: 6, child: mainTableContent),
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                    ),
+                    child: _buildDetailPanel(triageState.selectedItem!, notifier),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return mainTableContent;
+        },
       ),
     );
   }
 
   Widget _buildTable(List<TriageItem> items, TriageNotifier notifier) {
     if (items.isEmpty) {
-      return const Center(
-        child: Text('Tidak ada data rumah tangga yang sesuai filter.', style: TextStyle(color: Color(0xFF64748B))),
+      return EmptyStateView(
+        icon: Icons.filter_alt_off_outlined,
+        title: 'Tidak Ada Data Rumah Tangga',
+        description: 'Tidak ada data rumah tangga yang sesuai kriteria pencarian dan filter saat ini.',
+        actionLabel: 'Reset Filter',
+        onAction: () => notifier.clearFilters(),
       );
     }
 
@@ -525,11 +569,34 @@ class _TriagePageState extends ConsumerState<TriagePage> with SingleTickerProvid
           Text(item.address, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
           const SizedBox(height: 12),
 
-          // Locate Shortcut
-          OutlinedButton.icon(
-            icon: const Icon(Icons.map, size: 16),
-            label: const Text('Buka di Peta (Locate)', style: TextStyle(fontSize: 12)),
-            onPressed: () => _openLocateDialog(item),
+          // Action Shortcuts
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                icon: const Icon(Icons.map, size: 16),
+                label: const Text('Buka di Peta', style: TextStyle(fontSize: 12)),
+                onPressed: () => _openLocateDialog(item),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1E3A8A),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                icon: const Icon(Icons.assignment_ind, size: 16),
+                label: const Text('Tugaskan Relawan', style: TextStyle(fontSize: 12)),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Buka menu Penugasan untuk mengarahkan relawan ke Rumah ${item.number} (${item.headName}).'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           const Divider(),

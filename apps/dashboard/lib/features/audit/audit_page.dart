@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ui/ui.dart';
 
 import '../../app/auth_provider.dart';
 import 'audit_model.dart';
@@ -131,23 +132,22 @@ class AuditPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Audit Log & Rekam Jejak Sistem: $rtName',
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Catatan akses data kerentanan, ekspor rekap, modifikasi data, dan konfigurasi AI (FR-ADM-02).',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                    ),
-                  ],
+            OperationalPageHeader(
+              title: 'Audit Log & Rekam Jejak Sistem: $rtName',
+              subtitle: 'Catatan akses data kerentanan, ekspor rekap, modifikasi data, dan konfigurasi AI (FR-ADM-02).',
+              actions: [
+                OutlinedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Mengunduh seluruh rekam jejak audit log RT format CSV...'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.file_download_outlined, size: 16),
+                  label: const Text('Ekspor Log CSV', style: TextStyle(fontSize: 12)),
                 ),
-                const Spacer(),
                 IconButton.outlined(
                   tooltip: 'Muat ulang audit log',
                   icon: const Icon(Icons.refresh, size: 20),
@@ -167,7 +167,10 @@ class AuditPage extends ConsumerWidget {
               ),
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Row(
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 10,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     SizedBox(
                       width: 260,
@@ -183,7 +186,6 @@ class AuditPage extends ConsumerWidget {
                         onChanged: (val) => notifier.setSearchQuery(val),
                       ),
                     ),
-                    const SizedBox(width: 14),
                     DropdownButtonHideUnderline(
                       child: Container(
                         height: 38,
@@ -208,7 +210,6 @@ class AuditPage extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const Spacer(),
                     Text(
                       'Menampilkan ${auditState.filteredLogs.length} dari ${auditState.total} aktivitas tercatat',
                       style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
@@ -231,15 +232,21 @@ class AuditPage extends ConsumerWidget {
                 child: auditState.isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : auditState.filteredLogs.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'Tidak ada audit log yang sesuai filter.',
-                              style: TextStyle(color: Color(0xFF64748B)),
-                            ),
+                        ? EmptyStateView(
+                            icon: Icons.history_toggle_off,
+                            title: 'Tidak Ada Rekam Jejak',
+                            description: 'Tidak ditemukan catatan audit log yang cocok dengan filter atau kata kunci pencarian.',
+                            actionLabel: 'Reset Filter',
+                            onAction: () {
+                              notifier.setActionFilter('all');
+                              notifier.setSearchQuery('');
+                            },
                           )
-                        : ListView(
-                            children: [
-                              DataTable(
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.vertical,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: DataTable(
                                 headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
                                 columns: const [
                                   DataColumn(label: Text('Waktu (WIB)', style: TextStyle(fontWeight: FontWeight.bold))),
@@ -293,7 +300,7 @@ class AuditPage extends ConsumerWidget {
                                   );
                                 }).toList(),
                               ),
-                            ],
+                            ),
                           ),
               ),
             ),

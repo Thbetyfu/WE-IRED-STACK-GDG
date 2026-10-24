@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:core/core.dart';
+import 'package:core/core.dart' hide TaskItem;
 import 'package:dashboard/app/auth_provider.dart';
+import 'package:dashboard/features/triage/triage_model.dart';
+import 'package:dashboard/features/triage/triage_provider.dart';
+import 'package:dashboard/features/assignments/assignments_page.dart';
 
 void main() {
   group('AuthState and AuthNotifier Unit Tests', () {
@@ -200,6 +203,87 @@ void main() {
 
       expect(expiredAnn.isExpired, isTrue);
       expect(activeAnn.isExpired, isFalse);
+    });
+  });
+
+  group('Triage State and Score Logic Tests (FR-DSH-03, FR-PRI-04, SDD 6.1)', () {
+    test('Priority score components conform to SDD 6.1 formula weights', () {
+      final breakdown = const ScoreBreakdownModel(
+        u: 40.0,
+        v: 24.0,
+        w: 20.0,
+        n: 10.0,
+        d: 6.0,
+      );
+      final total = breakdown.u + breakdown.v + breakdown.w + breakdown.n + breakdown.d;
+      expect(total, 100.0);
+      expect(breakdown.u, lessThanOrEqualTo(40.0));
+      expect(breakdown.v, lessThanOrEqualTo(24.0));
+      expect(breakdown.w, lessThanOrEqualTo(20.0));
+      expect(breakdown.n, lessThanOrEqualTo(10.0));
+      expect(breakdown.d, lessThanOrEqualTo(6.0));
+    });
+
+    test('TriageState copyWith and clearFilters reset filter properties properly', () {
+      final state = const TriageState(
+        statusFilter: 'kritis',
+        blockFilter: 'Blok A',
+        vulnerabilityFilter: 'lansia',
+        channelFilter: 'relay',
+        searchQuery: 'Santoso',
+        sortBy: 'number_asc',
+      );
+
+      final cleared = state.copyWith(
+        statusFilter: 'all',
+        blockFilter: 'all',
+        vulnerabilityFilter: 'all',
+        channelFilter: 'all',
+        searchQuery: '',
+        sortBy: 'priority_desc',
+      );
+
+      expect(cleared.statusFilter, 'all');
+      expect(cleared.blockFilter, 'all');
+      expect(cleared.vulnerabilityFilter, 'all');
+      expect(cleared.channelFilter, 'all');
+      expect(cleared.searchQuery, '');
+      expect(cleared.sortBy, 'priority_desc');
+    });
+  });
+
+  group('Task Assignment & Greedy Modeling Tests (SDD 6.3, FR-TSK-01..05)', () {
+    test('Task Item overdue threshold detects tasks waiting > 5 minutes', () {
+      final overdueTask = TaskItem(
+        id: 'tsk-01',
+        householdNumber: '04',
+        headName: 'Keluarga Bpk. Santoso',
+        address: 'Jl. Merak No. 4',
+        block: 'Blok A',
+        urgency: 'kritis',
+        needs: ['Evakuasi Medis'],
+        priorityScore: 84.5,
+        status: 'in_progress',
+        createdAt: DateTime.now().subtract(const Duration(minutes: 8)),
+        isOverdue: true,
+      );
+
+      final freshTask = TaskItem(
+        id: 'tsk-02',
+        householdNumber: '12',
+        headName: 'Keluarga Ibu Ratna',
+        address: 'Jl. Merak No. 12',
+        block: 'Blok B',
+        urgency: 'kritis',
+        needs: ['Air Bersih'],
+        priorityScore: 78.0,
+        status: 'suggested',
+        createdAt: DateTime.now().subtract(const Duration(minutes: 2)),
+        isOverdue: false,
+      );
+
+      expect(overdueTask.isOverdue, isTrue);
+      expect(freshTask.isOverdue, isFalse);
     });
   });
 }

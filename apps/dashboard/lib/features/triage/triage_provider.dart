@@ -137,6 +137,17 @@ class TriageNotifier extends StateNotifier<TriageState> {
   void setSortBy(String sort) => state = state.copyWith(sortBy: sort);
   void setSearchQuery(String query) => state = state.copyWith(searchQuery: query);
 
+  void clearFilters() {
+    state = state.copyWith(
+      statusFilter: 'all',
+      blockFilter: 'all',
+      vulnerabilityFilter: 'all',
+      channelFilter: 'all',
+      searchQuery: '',
+      sortBy: 'priority_desc',
+    );
+  }
+
   void selectItem(TriageItem? item) async {
     state = state.copyWith(selectedItem: item, clearSelectedItem: item == null);
     if (item != null && item.reportHistory.isEmpty) {

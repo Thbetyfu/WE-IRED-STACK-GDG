@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:ui/ui.dart';
 
 import '../../app/auth_provider.dart';
 import 'recap_model.dart';
@@ -106,110 +107,87 @@ class _RecapPageState extends ConsumerState<RecapPage> {
     final recap = state.recap;
     final isApproved = recap?.isApproved ?? false;
 
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Pusat Rekapitulasi & Laporan Operasi: ${recap?.data?.region.rtName ?? authState.selectedRT?.name ?? "RT 05"}',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+    final statusBadge = (recap != null)
+        ? Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: isApproved ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isApproved ? const Color(0xFF86EFAC) : const Color(0xFFFDE68A),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isApproved ? Icons.verified : Icons.pending_actions,
+                  size: 14,
+                  color: isApproved ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isApproved ? 'Resmi Disetujui' : 'Draf Pengurus',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isApproved ? const Color(0xFF15803D) : const Color(0xFFB45309),
                   ),
-                  const SizedBox(width: 12),
-                  if (recap != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isApproved ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isApproved ? const Color(0xFF86EFAC) : const Color(0xFFFDE68A),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isApproved ? Icons.verified : Icons.pending_actions,
-                            size: 14,
-                            color: isApproved ? const Color(0xFF15803D) : const Color(0xFFB45309),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            isApproved ? 'Resmi Disetujui' : 'Draf Pengurus',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: isApproved ? const Color(0xFF15803D) : const Color(0xFFB45309),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Agregasi data warga, proteksi privasi kesehatan, draf narasi AI lokal, persetujuan pengurus, dan ekspor PDF/CSV/WhatsApp (FR-RCP, FR-ADM, FR-AI).',
-                style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-              ),
-            ],
+                ),
+              ],
+            ),
+          )
+        : null;
+
+    final actions = <Widget>[];
+    if (recap != null) {
+      actions.add(
+        OutlinedButton.icon(
+          onPressed: state.isExporting ? null : () => notifier.exportCSV(recap.id),
+          icon: state.isExporting
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Icon(Icons.table_chart_outlined, size: 18),
+          label: const Text('Ekspor CSV'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF334155),
+            side: const BorderSide(color: Color(0xFFCBD5E1)),
           ),
         ),
-        if (recap != null) ...[
-          OutlinedButton.icon(
-            onPressed: state.isExporting
-                ? null
-                : () async {
-                    await notifier.exportCSV(recap.id);
-                  },
-            icon: state.isExporting
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.table_chart_outlined, size: 18),
-            label: const Text('Ekspor CSV'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF334155),
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
-            ),
+      );
+      actions.add(
+        OutlinedButton.icon(
+          onPressed: state.isExporting ? null : () => notifier.exportPDF(recap.id),
+          icon: state.isExporting
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Icon(Icons.picture_as_pdf_outlined, size: 18, color: Color(0xFFE11D48)),
+          label: const Text('Unduh PDF'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF334155),
+            side: const BorderSide(color: Color(0xFFCBD5E1)),
           ),
-          const SizedBox(width: 8),
-          OutlinedButton.icon(
-            onPressed: state.isExporting
-                ? null
-                : () async {
-                    await notifier.exportPDF(recap.id);
-                  },
-            icon: state.isExporting
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.picture_as_pdf_outlined, size: 18, color: Color(0xFFE11D48)),
-            label: const Text('Unduh PDF'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF334155),
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
-            ),
+        ),
+      );
+      actions.add(
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0D9488),
+            foregroundColor: Colors.white,
+            elevation: 0,
           ),
-          const SizedBox(width: 12),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0D9488),
-              foregroundColor: Colors.white,
-              elevation: 0,
-            ),
-            icon: state.isDraftingAI
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Icon(Icons.auto_awesome, size: 18),
-            label: const Text('Draf Narasi AI'),
-            onPressed: state.isDraftingAI
-                ? null
-                : () async {
-                    await notifier.draftAINarrative(recap.id);
-                  },
-          ),
-        ],
-      ],
+          icon: state.isDraftingAI
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : const Icon(Icons.auto_awesome, size: 18),
+          label: const Text('Draf Narasi AI'),
+          onPressed: state.isDraftingAI ? null : () => notifier.draftAINarrative(recap.id),
+        ),
+      );
+    }
+
+    return OperationalPageHeader(
+      title: 'Pusat Rekapitulasi: ${recap?.data?.region.rtName ?? authState.selectedRT?.name ?? "RT 05"}',
+      subtitle: 'Agregasi data warga, proteksi privasi kesehatan, draf narasi AI lokal, persetujuan pengurus, dan ekspor resmi (FR-RCP, FR-ADM, FR-AI).',
+      statusBadge: statusBadge,
+      actions: actions,
     );
   }
 
@@ -274,109 +252,167 @@ class _RecapPageState extends ConsumerState<RecapPage> {
     final recap = state.recap!;
     final d = recap.data;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left Column: Aggregate Metrics & Follow-up Data (60%)
-        Expanded(
-          flex: 6,
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              // 1. Metric Summary Cards
-              _buildHouseholdMetricCards(d?.householdSummary),
-              const SizedBox(height: 16),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 1150;
 
-              // 2. Vulnerable & Urgent Needs Cards
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        final leftWidgets = [
+          // 1. Metric Summary Cards
+          _buildHouseholdMetricCards(d?.householdSummary),
+          const SizedBox(height: 16),
+
+          // 2. Vulnerable & Urgent Needs Cards
+          LayoutBuilder(
+            builder: (ctx, subConstraints) {
+              final isSubWide = subConstraints.maxWidth >= 600;
+              if (isSubWide) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _buildVulnerableReachCard(d?.vulnerableSummary)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildNeedsSummaryCard(d?.needsSummary)),
+                  ],
+                );
+              }
+              return Column(
                 children: [
-                  Expanded(child: _buildVulnerableReachCard(d?.vulnerableSummary)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildNeedsSummaryCard(d?.needsSummary)),
+                  _buildVulnerableReachCard(d?.vulnerableSummary),
+                  const SizedBox(height: 16),
+                  _buildNeedsSummaryCard(d?.needsSummary),
                 ],
-              ),
-              const SizedBox(height: 16),
-
-              // 3. Follow-Up Outreach List
-              _buildFollowUpCard(d?.followUpHouseholds ?? []),
-              const SizedBox(height: 16),
-
-              // 4. Performance Metrics
-              _buildPerformanceCard(d?.metrics, d?.incident),
-            ],
+              );
+            },
           ),
-        ),
-        const SizedBox(width: 24),
+          const SizedBox(height: 16),
 
-        // Right Column: Governance, Narrative, Notes, Approval & WhatsApp (40%)
-        Expanded(
-          flex: 4,
-          child: ListView(
-            padding: EdgeInsets.zero,
+          // 3. Follow-Up Outreach List
+          _buildFollowUpCard(d?.followUpHouseholds ?? []),
+          const SizedBox(height: 16),
+
+          // 4. Performance Metrics
+          _buildPerformanceCard(d?.metrics, d?.incident),
+        ];
+
+        final rightWidgets = [
+          // AI Narrative Box
+          _buildNarrativeCard(recap, state, notifier),
+          const SizedBox(height: 16),
+
+          // Pengurus Notes Box
+          _buildNotesCard(recap, state, notifier),
+          const SizedBox(height: 16),
+
+          // Approval & WhatsApp Distribution Box
+          _buildApprovalAndDistributionCard(recap, state, notifier),
+        ];
+
+        if (isWide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // AI Narrative Box
-              _buildNarrativeCard(recap, state, notifier),
-              const SizedBox(height: 16),
+              // Left Column: Aggregate Metrics & Follow-up Data (60%)
+              Expanded(
+                flex: 6,
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: leftWidgets,
+                ),
+              ),
+              const SizedBox(width: 24),
 
-              // Pengurus Notes Box
-              _buildNotesCard(recap, state, notifier),
-              const SizedBox(height: 16),
-
-              // Approval & WhatsApp Distribution Box
-              _buildApprovalAndDistributionCard(recap, state, notifier),
+              // Right Column: Governance, Narrative, Notes, Approval & WhatsApp (40%)
+              Expanded(
+                flex: 4,
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: rightWidgets,
+                ),
+              ),
             ],
-          ),
-        ),
-      ],
+          );
+        }
+
+        // Narrow / Tablet view: single unified vertical scroll list
+        return ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            ...leftWidgets,
+            const SizedBox(height: 24),
+            ...rightWidgets,
+          ],
+        );
+      },
     );
   }
 
   Widget _buildHouseholdMetricCards(HouseholdSummaryModel? s) {
-    return Row(
-      children: [
-        _buildSmallMetric('Total Rumah Tangga', '${s?.total ?? 0}', const Color(0xFF334155), Icons.home_outlined),
-        const SizedBox(width: 12),
-        _buildSmallMetric('Aman di Rumah', '${s?.aman ?? 0}', const Color(0xFF15803D), Icons.check_circle_outline),
-        const SizedBox(width: 12),
-        _buildSmallMetric('Di Titik Kumpul', '${s?.titikKumpul ?? 0}', const Color(0xFF0369A1), Icons.meeting_room_outlined),
-        const SizedBox(width: 12),
-        _buildSmallMetric('Butuh Bantuan', '${s?.butuhBantuan ?? 0}', const Color(0xFFE11D48), Icons.warning_amber_rounded),
-        const SizedBox(width: 12),
-        _buildSmallMetric('Belum Lapor', '${s?.belumMelapor ?? 0}', const Color(0xFFD97706), Icons.help_outline_rounded),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        if (totalWidth >= 750) {
+          return Row(
+            children: [
+              Expanded(child: _buildSmallMetric('Total KK', '${s?.total ?? 0}', const Color(0xFF334155), Icons.home_outlined)),
+              const SizedBox(width: 10),
+              Expanded(child: _buildSmallMetric('Aman', '${s?.aman ?? 0}', const Color(0xFF15803D), Icons.check_circle_outline)),
+              const SizedBox(width: 10),
+              Expanded(child: _buildSmallMetric('Titik Kumpul', '${s?.titikKumpul ?? 0}', const Color(0xFF0369A1), Icons.meeting_room_outlined)),
+              const SizedBox(width: 10),
+              Expanded(child: _buildSmallMetric('Butuh Bantuan', '${s?.butuhBantuan ?? 0}', const Color(0xFFE11D48), Icons.warning_amber_rounded)),
+              const SizedBox(width: 10),
+              Expanded(child: _buildSmallMetric('Belum Lapor', '${s?.belumMelapor ?? 0}', const Color(0xFFD97706), Icons.help_outline_rounded)),
+            ],
+          );
+        }
+
+        final columns = totalWidth >= 480 ? 3 : 2;
+        final cardWidth = (totalWidth - (columns - 1) * 10) / columns;
+
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            SizedBox(width: cardWidth, child: _buildSmallMetric('Total KK', '${s?.total ?? 0}', const Color(0xFF334155), Icons.home_outlined)),
+            SizedBox(width: cardWidth, child: _buildSmallMetric('Aman', '${s?.aman ?? 0}', const Color(0xFF15803D), Icons.check_circle_outline)),
+            SizedBox(width: cardWidth, child: _buildSmallMetric('Titik Kumpul', '${s?.titikKumpul ?? 0}', const Color(0xFF0369A1), Icons.meeting_room_outlined)),
+            SizedBox(width: cardWidth, child: _buildSmallMetric('Butuh Bantuan', '${s?.butuhBantuan ?? 0}', const Color(0xFFE11D48), Icons.warning_amber_rounded)),
+            SizedBox(width: cardWidth, child: _buildSmallMetric('Belum Lapor', '${s?.belumMelapor ?? 0}', const Color(0xFFD97706), Icons.help_outline_rounded)),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildSmallMetric(String label, String value, Color color, IconData icon) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 16, color: color),
-                const Spacer(),
-                Text(
-                  value,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const Spacer(),
+              Text(
+                value,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -397,11 +433,15 @@ class _RecapPageState extends ConsumerState<RecapPage> {
             children: [
               const Icon(Icons.elderly, size: 18, color: Color(0xFF7C3AED)),
               const SizedBox(width: 8),
-              const Text(
-                'Warga Rentan Terjangkau',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+              const Expanded(
+                child: Text(
+                  'Warga Rentan Terjangkau',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(
                 '${v?.reachedCount ?? 0} / ${v?.totalVulnerable ?? 0} jiwa',
                 style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF7C3AED)),
@@ -443,9 +483,13 @@ class _RecapPageState extends ConsumerState<RecapPage> {
             children: [
               Icon(Icons.inventory_2_outlined, size: 18, color: Color(0xFF0D9488)),
               SizedBox(width: 8),
-              Text(
-                'Distribusi Kebutuhan Darurat',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+              Expanded(
+                child: Text(
+                  'Distribusi Kebutuhan Darurat',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -506,11 +550,15 @@ class _RecapPageState extends ConsumerState<RecapPage> {
             children: [
               const Icon(Icons.priority_high, size: 18, color: Color(0xFFE11D48)),
               const SizedBox(width: 8),
-              const Text(
-                'Daftar Tindak Lanjut Pasca-Operasi (Follow-Up)',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+              const Expanded(
+                child: Text(
+                  'Daftar Tindak Lanjut Pasca-Operasi',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(
                 '${list.length} KK terdata',
                 style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
@@ -613,9 +661,13 @@ class _RecapPageState extends ConsumerState<RecapPage> {
             children: [
               Icon(Icons.speed, size: 18, color: Color(0xFF0369A1)),
               SizedBox(width: 8),
-              Text(
-                'Metrik Kecepatan Respons (Sesuai SRS Bagian 6)',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+              Expanded(
+                child: Text(
+                  'Metrik Kecepatan Respons (SRS Bagian 6)',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -672,11 +724,15 @@ class _RecapPageState extends ConsumerState<RecapPage> {
             children: [
               const Icon(Icons.article_outlined, size: 18, color: Color(0xFF0D9488)),
               const SizedBox(width: 8),
-              const Text(
-                'Narasi Resmi Laporan Operasi',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+              const Expanded(
+                child: Text(
+                  'Narasi Resmi Laporan Operasi',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               if (recap.aiAssisted)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -750,9 +806,13 @@ class _RecapPageState extends ConsumerState<RecapPage> {
             children: [
               Icon(Icons.note_alt_outlined, size: 18, color: Color(0xFFD97706)),
               SizedBox(width: 8),
-              Text(
-                'Catatan Tambahan & Evaluasi Pengurus',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+              Expanded(
+                child: Text(
+                  'Catatan Tambahan & Evaluasi Pengurus',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -813,9 +873,13 @@ class _RecapPageState extends ConsumerState<RecapPage> {
             children: [
               Icon(Icons.verified_outlined, size: 18, color: Color(0xFF15803D)),
               SizedBox(width: 8),
-              Text(
-                'Persetujuan & Distribusi Resmi (FR-RCP-02/04)',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+              Expanded(
+                child: Text(
+                  'Persetujuan & Distribusi Resmi (FR-RCP-02/04)',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),

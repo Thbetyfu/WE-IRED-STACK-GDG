@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ui/ui.dart';
 
 import '../../app/auth_provider.dart';
 import 'posko_provider.dart';
@@ -63,23 +64,10 @@ class _PoskoPageState extends ConsumerState<PoskoPage> with SingleTickerProvider
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Manajemen Posko Lokal & Sinkronisasi: $rtName',
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Status sinkronisasi offline, pertukaran event push/pull, manajemen konflik, dan QR konfigurasi (FR-PSK-01-04).',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                    ),
-                  ],
-                ),
-                const Spacer(),
+            OperationalPageHeader(
+              title: 'Manajemen Posko Lokal: $rtName',
+              subtitle: 'Status sinkronisasi offline, pertukaran event push/pull, manajemen konflik, dan QR konfigurasi (FR-PSK-01-04).',
+              actions: [
                 IconButton.outlined(
                   tooltip: 'Muat ulang status sinkronisasi',
                   icon: const Icon(Icons.refresh, size: 20),
@@ -138,170 +126,183 @@ class _PoskoPageState extends ConsumerState<PoskoPage> with SingleTickerProvider
               const SizedBox(height: 16),
             ],
 
-            // Top Row: Real Sync Status Card & QR Config Card
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Actual Sync Status Card
-                Expanded(
-                  flex: 5,
-                  child: Card(
-                    color: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.sync_alt, color: Color(0xFF1E3A8A)),
-                              const SizedBox(width: 8),
-                              const Text(
+            // Top Row: Real Sync Status Card & QR Config Card (Responsive)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 950;
+
+                final syncCard = Card(
+                  color: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.sync_alt, color: Color(0xFF1E3A8A)),
+                            const SizedBox(width: 8),
+                            const Expanded(
+                              child: Text(
                                 'Status Operasional & Sinkronisasi Aktual',
                                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: status?.mode == 'posko' ? const Color(0xFFEFF6FF) : const Color(0xFFF0FDF4),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: status?.mode == 'posko' ? const Color(0xFFBFDBFE) : const Color(0xFFBBF7D0),
-                                  ),
-                                ),
-                                child: Text(
-                                  status?.mode == 'posko' ? 'MODE: POSKO LOKAL' : 'MODE: CLOUD',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: status?.mode == 'posko' ? const Color(0xFF1E40AF) : const Color(0xFF15803D),
-                                  ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: status?.mode == 'posko' ? const Color(0xFFEFF6FF) : const Color(0xFFF0FDF4),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: status?.mode == 'posko' ? const Color(0xFFBFDBFE) : const Color(0xFFBBF7D0),
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Real status indicators
-                          _buildStatusItem(
-                            icon: Icons.tag,
-                            color: const Color(0xFF3B82F6),
-                            title: 'Posko ID',
-                            value: status?.poskoId ?? 'posko-lokal-01',
-                            subtitle: 'Identitas node posko lokal terdaftar',
-                          ),
-                          const Divider(height: 16),
-                          _buildStatusItem(
-                            icon: Icons.timeline,
-                            color: const Color(0xFF10B981),
-                            title: 'Last Event Cursor',
-                            value: 'Kursor #${status?.cursor ?? 0}',
-                            subtitle: 'Posisi event sequence realtime terakhir yang tersimpan',
-                          ),
-                          const Divider(height: 16),
-                          _buildStatusItem(
-                            icon: Icons.warning_amber,
-                            color: (status?.pendingConflicts ?? 0) > 0 ? const Color(0xFFEA580C) : const Color(0xFF64748B),
-                            title: 'Konflik Sinkronisasi Belum Selesai',
-                            value: '${status?.pendingConflicts ?? 0} Konflik',
-                            subtitle: 'Divergensi master data yang menunggu peninjauan pengurus',
-                          ),
-                          const Divider(height: 16),
-                          _buildStatusItem(
-                            icon: Icons.access_time,
-                            color: const Color(0xFF6366F1),
-                            title: 'Waktu Sinkronisasi Terakhir',
-                            value: status?.lastSyncAt != null
-                                ? '${status!.lastSyncAt!.hour.toString().padLeft(2, '0')}:${status.lastSyncAt!.minute.toString().padLeft(2, '0')} WIB'
-                                : 'Baru saja',
-                            subtitle: 'Pertukaran event push/pull dua arah',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 18),
-
-                // QR Konfigurasi Relawan Card
-                Expanded(
-                  flex: 4,
-                  child: Card(
-                    color: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Row(
-                            children: const [
-                              Icon(Icons.qr_code_2, color: Color(0xFF1E3A8A)),
-                              SizedBox(width: 8),
-                              Text(
-                                'QR Konfigurasi Relawan',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              child: Text(
+                                status?.mode == 'posko' ? 'MODE: POSKO LOKAL' : 'MODE: CLOUD',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: status?.mode == 'posko' ? const Color(0xFF1E40AF) : const Color(0xFF15803D),
+                                ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Pindai QR ini dari Aplikasi Relawan untuk mengarahkan ke Posko Lokal dan menyematkan sertifikat HTTPS self-signed (FR-PSK-04).',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                          ),
-                          const SizedBox(height: 14),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
 
-                          // Visual QR Mockup Box
-                          Container(
-                            width: 150,
-                            height: 150,
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFCBD5E1), width: 2),
-                            ),
-                            child: const Center(
-                              child: Icon(Icons.qr_code_scanner, size: 90, color: Color(0xFF1E293B)),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Endpoint Info
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              qr?.endpointUrl ?? 'https://192.168.4.1:8080/api/v1',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'SHA-256 Fingerprint: ${qr?.certFingerprint ?? "E3:B0:C4:42:..."}',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 10, color: Color(0xFF64748B), fontFamily: 'monospace'),
-                          ),
-                        ],
-                      ),
+                        // Real status indicators
+                        _buildStatusItem(
+                          icon: Icons.tag,
+                          color: const Color(0xFF3B82F6),
+                          title: 'Posko ID',
+                          value: status?.poskoId ?? 'posko-lokal-01',
+                          subtitle: 'Identitas node posko lokal terdaftar',
+                        ),
+                        const Divider(height: 16),
+                        _buildStatusItem(
+                          icon: Icons.timeline,
+                          color: const Color(0xFF10B981),
+                          title: 'Last Event Cursor',
+                          value: 'Kursor #${status?.cursor ?? 0}',
+                          subtitle: 'Posisi event sequence realtime terakhir yang tersimpan',
+                        ),
+                        const Divider(height: 16),
+                        _buildStatusItem(
+                          icon: Icons.warning_amber,
+                          color: (status?.pendingConflicts ?? 0) > 0 ? const Color(0xFFEA580C) : const Color(0xFF64748B),
+                          title: 'Konflik Sinkronisasi Belum Selesai',
+                          value: '${status?.pendingConflicts ?? 0} Konflik',
+                          subtitle: 'Divergensi master data yang menunggu peninjauan pengurus',
+                        ),
+                        const Divider(height: 16),
+                        _buildStatusItem(
+                          icon: Icons.access_time,
+                          color: const Color(0xFF6366F1),
+                          title: 'Waktu Sinkronisasi Terakhir',
+                          value: status?.lastSyncAt != null
+                              ? '${status!.lastSyncAt!.hour.toString().padLeft(2, '0')}:${status.lastSyncAt!.minute.toString().padLeft(2, '0')} WIB'
+                              : 'Baru saja',
+                          subtitle: 'Pertukaran event push/pull dua arah',
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                );
+
+                final qrCard = Card(
+                  color: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(Icons.qr_code_2, color: Color(0xFF1E3A8A)),
+                            SizedBox(width: 8),
+                            Text(
+                              'QR Konfigurasi Relawan',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Pindai QR ini dari Aplikasi Relawan untuk mengarahkan ke Posko Lokal dan menyematkan sertifikat HTTPS self-signed (FR-PSK-04).',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Visual QR Mockup Box
+                        Container(
+                          width: 150,
+                          height: 150,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFCBD5E1), width: 2),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.qr_code_scanner, size: 90, color: Color(0xFF1E293B)),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Endpoint Info
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            qr?.endpointUrl ?? 'https://192.168.4.1:8080/api/v1',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'SHA-256 Fingerprint: ${qr?.certFingerprint ?? "E3:B0:C4:42:..."}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 10, color: Color(0xFF64748B), fontFamily: 'monospace'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+
+                if (isWide) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 5, child: syncCard),
+                      const SizedBox(width: 18),
+                      Expanded(flex: 4, child: qrCard),
+                    ],
+                  );
+                }
+
+                return Column(
+                  children: [
+                    syncCard,
+                    const SizedBox(height: 18),
+                    qrCard,
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 20),
 
@@ -339,10 +340,13 @@ class _PoskoPageState extends ConsumerState<PoskoPage> with SingleTickerProvider
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 8,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
-                                  Expanded(
-                                    flex: 2,
+                                  SizedBox(
+                                    width: 280,
                                     child: TextField(
                                       controller: _importPasswordController,
                                       obscureText: true,
@@ -354,13 +358,11 @@ class _PoskoPageState extends ConsumerState<PoskoPage> with SingleTickerProvider
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
                                   OutlinedButton.icon(
                                     icon: const Icon(Icons.paste, size: 16),
                                     label: const Text('Muat Contoh Envelope'),
                                     onPressed: _fillSampleEnvelope,
                                   ),
-                                  const SizedBox(width: 12),
                                   ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF1E3A8A),
@@ -433,9 +435,12 @@ class _PoskoPageState extends ConsumerState<PoskoPage> with SingleTickerProvider
                                     children: [
                                       const Icon(Icons.check_circle_outline, color: Color(0xFF16A34A), size: 18),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        'Hasil Impor: Status: ${poskoState.lastImportResult!.status} • RT: ${poskoState.lastImportResult!.rtId} • ${poskoState.lastImportResult!.householdsCount} Rumah • ${poskoState.lastImportResult!.volunteersCount} Relawan • Last Cursor: ${poskoState.lastImportResult!.lastCursor}',
-                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                                      Expanded(
+                                        child: Text(
+                                          'Hasil Impor: Status: ${poskoState.lastImportResult!.status} • RT: ${poskoState.lastImportResult!.rtId} • ${poskoState.lastImportResult!.householdsCount} Rumah • ${poskoState.lastImportResult!.volunteersCount} Relawan • Last Cursor: ${poskoState.lastImportResult!.lastCursor}',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -448,9 +453,13 @@ class _PoskoPageState extends ConsumerState<PoskoPage> with SingleTickerProvider
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 8,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
-                                  Expanded(
+                                  SizedBox(
+                                    width: 280,
                                     child: TextField(
                                       controller: _exportPasswordController,
                                       obscureText: true,
@@ -462,7 +471,6 @@ class _PoskoPageState extends ConsumerState<PoskoPage> with SingleTickerProvider
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 14),
                                   ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF1E3A8A),
@@ -524,11 +532,14 @@ class _PoskoPageState extends ConsumerState<PoskoPage> with SingleTickerProvider
                       children: [
                         const Icon(Icons.rule, color: Color(0xFF1E3A8A)),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Daftar Konflik Sinkronisasi (sync_conflicts)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        const Expanded(
+                          child: Text(
+                            'Daftar Konflik Sinkronisasi (sync_conflicts)',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 12),
                         Text(
                           '${poskoState.conflicts.length} Konflik Tercatat',
                           style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),

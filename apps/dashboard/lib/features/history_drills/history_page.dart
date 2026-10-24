@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:core/core.dart';
+import 'package:ui/ui.dart';
 
 import '../../app/auth_provider.dart';
 import 'history_provider.dart';
@@ -24,30 +25,13 @@ class HistoryPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Page Header
-            Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Riwayat Insiden & Evaluasi Latihan: $rtName',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Perbandingan metrik respons (t90, t100, jangkauan warga rentan) antar-simulasi latihan dan operasi nyata (FR-INC-07-08).',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                IconButton(
+            OperationalPageHeader(
+              title: 'Riwayat Insiden & Evaluasi Latihan: $rtName',
+              subtitle: 'Perbandingan metrik respons (t90, t100, jangkauan warga rentan) antar-simulasi latihan dan operasi nyata (FR-INC-07-08).',
+              actions: [
+                IconButton.outlined(
                   tooltip: 'Segarkan data',
-                  icon: const Icon(Icons.refresh, color: Color(0xFF475569)),
+                  icon: const Icon(Icons.refresh, size: 20),
                   onPressed: () {
                     final rtId = authState.selectedRT?.id ?? 'rt-01';
                     historyNotifier.loadHistory(rtId);
@@ -133,45 +117,61 @@ class HistoryPage extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Summary Cards Grid
-        Row(
-          children: [
-            Expanded(
-              child: _MetricCard(
-                title: 'Total Latihan',
-                value: '${summary.totalDrills}',
-                unit: 'sesi simulasi',
-                icon: Icons.fitness_center,
-                iconColor: const Color(0xFF2563EB),
-                bgColor: const Color(0xFFEFF6FF),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _MetricCard(
-                title: 'Rata-rata Rentan 30m',
-                value: '${summary.averageVulnReached30.toStringAsFixed(1)}%',
-                unit: 'target >= 80%',
-                icon: Icons.elderly,
-                iconColor: const Color(0xFF059669),
-                bgColor: const Color(0xFFECFDF5),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _MetricCard(
-                title: 'Pengiriman Offline',
-                value: '${summary.averageOfflineDelivery.toStringAsFixed(1)}%',
-                unit: 'mesh & relay packet',
-                icon: Icons.wifi_off,
-                iconColor: const Color(0xFFD97706),
-                bgColor: const Color(0xFFFFFBEB),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _TrendCard(trend: summary.trend),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 900;
+            final m1 = _MetricCard(
+              title: 'Total Latihan',
+              value: '${summary.totalDrills}',
+              unit: 'sesi simulasi',
+              icon: Icons.fitness_center,
+              iconColor: const Color(0xFF2563EB),
+              bgColor: const Color(0xFFEFF6FF),
+            );
+            final m2 = _MetricCard(
+              title: 'Rata-rata Rentan 30m',
+              value: '${summary.averageVulnReached30.toStringAsFixed(1)}%',
+              unit: 'target >= 80%',
+              icon: Icons.elderly,
+              iconColor: const Color(0xFF059669),
+              bgColor: const Color(0xFFECFDF5),
+            );
+            final m3 = _MetricCard(
+              title: 'Pengiriman Offline',
+              value: '${summary.averageOfflineDelivery.toStringAsFixed(1)}%',
+              unit: 'mesh & relay packet',
+              icon: Icons.wifi_off,
+              iconColor: const Color(0xFFD97706),
+              bgColor: const Color(0xFFFFFBEB),
+            );
+            final m4 = _TrendCard(trend: summary.trend);
+
+            if (isWide) {
+              return Row(
+                children: [
+                  Expanded(child: m1),
+                  const SizedBox(width: 14),
+                  Expanded(child: m2),
+                  const SizedBox(width: 14),
+                  Expanded(child: m3),
+                  const SizedBox(width: 14),
+                  Expanded(child: m4),
+                ],
+              );
+            }
+
+            final cardWidth = (constraints.maxWidth - 14) / 2;
+            return Wrap(
+              spacing: 14,
+              runSpacing: 14,
+              children: [
+                SizedBox(width: cardWidth, child: m1),
+                SizedBox(width: cardWidth, child: m2),
+                SizedBox(width: cardWidth, child: m3),
+                SizedBox(width: cardWidth, child: m4),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 24),
 
@@ -185,13 +185,16 @@ class HistoryPage extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
-                  children: [
+                Row(
+                  children: const [
                     Icon(Icons.bar_chart, color: Color(0xFF0F172A), size: 20),
                     SizedBox(width: 8),
-                    Text(
-                      'Perbandingan Metrik Antar-Latihan (Grafik Performa)',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    Expanded(
+                      child: Text(
+                        'Perbandingan Metrik Antar-Latihan (Grafik Performa)',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
@@ -623,11 +626,14 @@ class _DrillPerformanceRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                'Simulasi ($dateStr)',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+              Expanded(
+                child: Text(
+                  'Simulasi ($dateStr)',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(
                 't90: ${drill.t90}m | t100: ${drill.t100}m',
                 style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),

@@ -14,6 +14,7 @@ class RtDataPage extends ConsumerStatefulWidget {
 
 class _RtDataPageState extends ConsumerState<RtDataPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  String _householdSearch = '';
 
   @override
   void initState() {
@@ -130,32 +131,16 @@ class _RtDataPageState extends ConsumerState<RtDataPage> with SingleTickerProvid
   }
 
   Widget _buildHeader(AuthState auth, RtDataState state, RtDataNotifier notifier, String rtId) {
-    return Row(
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Manajemen Data Wilayah: ${auth.selectedRT?.name ?? "RT 05"}',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Data rumah tangga, perlindungan data rentan, alur kode undangan, blok, relawan, dan titik kumpul (F-01 s.d. F-03).',
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-            ),
-          ],
-        ),
-        const Spacer(),
+    return OperationalPageHeader(
+      title: 'Manajemen Data RT: ${auth.selectedRT?.name ?? "RT 05"}',
+      subtitle: 'Data rumah tangga, perlindungan data rentan, alur kode undangan, blok, relawan, dan titik kumpul (F-01 s.d. F-03).',
+      actions: [
         OutlinedButton.icon(
-          onPressed: () {
-            notifier.loadAllData(rtId);
-          },
+          onPressed: () => notifier.loadAllData(rtId),
           icon: const Icon(Icons.refresh, size: 18),
           label: const Text('Muat Ulang'),
           style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF334155)),
         ),
-        const SizedBox(width: 10),
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF0D9488),
@@ -163,9 +148,7 @@ class _RtDataPageState extends ConsumerState<RtDataPage> with SingleTickerProvid
           ),
           icon: const Icon(Icons.add_home_outlined, size: 18),
           label: const Text('Tambah Rumah Tangga'),
-          onPressed: () {
-            _showAddHouseholdDialog(context, notifier, rtId);
-          },
+          onPressed: () => _showAddHouseholdDialog(context, notifier, rtId),
         ),
       ],
     );
@@ -194,110 +177,167 @@ class _RtDataPageState extends ConsumerState<RtDataPage> with SingleTickerProvid
       );
     }
 
-    return Card(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: state.households.length,
-        separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
-        itemBuilder: (context, index) {
-          final hh = state.households[index];
-          final inviteCode = hh.inviteCode ?? 'BELUM_ADA';
+    final filteredHouseholds = state.households.where((hh) {
+      if (_householdSearch.trim().isEmpty) return true;
+      final q = _householdSearch.toLowerCase().trim();
+      return hh.number.toLowerCase().contains(q) ||
+          hh.headName.toLowerCase().contains(q) ||
+          hh.address.toLowerCase().contains(q);
+    }).toList();
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0FDFA),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFF99F6E4)),
-                  ),
-                  child: Center(
-                    child: Text(
-                      hh.number,
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D9488), fontSize: 14),
-                    ),
-                  ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              width: 240,
+              height: 36,
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Cari no. rumah / nama KK...',
+                  prefixIcon: const Icon(Icons.search, size: 16),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                  isDense: true,
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(hh.headName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      const SizedBox(height: 2),
-                      Text(hh.address, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                      if (hh.lat != null && hh.lon != null)
-                        Text(
-                          'Lokasi: ${hh.lat!.toStringAsFixed(4)}, ${hh.lon!.toStringAsFixed(4)}',
-                          style: const TextStyle(fontSize: 10, color: Color(0xFF0D9488)),
-                        ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.phone_outlined, size: 14, color: Color(0xFF64748B)),
-                          const SizedBox(width: 4),
-                          Text(hh.waPhone, style: const TextStyle(fontSize: 12)),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        hh.hasDevice ? 'Memiliki Ponsel' : 'Tanpa Ponsel (Butuh Relawan)',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: hh.hasDevice ? const Color(0xFF15803D) : const Color(0xFFD97706),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Kode Undangan:', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
-                        Text(inviteCode, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: () => notifier.regenerateInvite(hh.id),
-                  icon: const Icon(Icons.send_outlined, size: 14),
-                  label: const Text('Kirim Kode', style: TextStyle(fontSize: 11)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF0D9488),
-                    side: const BorderSide(color: Color(0xFF99F6E4)),
-                  ),
-                ),
-              ],
+                onChanged: (val) => setState(() => _householdSearch = val),
+              ),
             ),
-          );
-        },
-      ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Menampilkan ${filteredHouseholds.length} dari ${state.households.length} Rumah Tangga',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: Card(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            child: filteredHouseholds.isEmpty
+                ? const Center(
+                    child: Text('Tidak ada rumah tangga yang cocok dengan pencarian.', style: TextStyle(color: Color(0xFF64748B))),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filteredHouseholds.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                    itemBuilder: (context, index) {
+                      final hh = filteredHouseholds[index];
+                      final inviteCode = hh.inviteCode ?? 'BELUM_ADA';
+
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minWidth: 680),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF0FDFA),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFF99F6E4)),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      hh.number,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0D9488), fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                SizedBox(
+                                  width: 200,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(hh.headName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      const SizedBox(height: 2),
+                                      Text(hh.address, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      if (hh.lat != null && hh.lon != null)
+                                        Text(
+                                          'Lokasi: ${hh.lat!.toStringAsFixed(4)}, ${hh.lon!.toStringAsFixed(4)}',
+                                          style: const TextStyle(fontSize: 10, color: Color(0xFF0D9488)),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                SizedBox(
+                                  width: 150,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.phone_outlined, size: 14, color: Color(0xFF64748B)),
+                                          const SizedBox(width: 4),
+                                          Flexible(
+                                            child: Text(hh.waPhone, style: const TextStyle(fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        hh.hasDevice ? 'Memiliki Ponsel' : 'Tanpa Ponsel (Butuh Relawan)',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          color: hh.hasDevice ? const Color(0xFF15803D) : const Color(0xFFD97706),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Container(
+                                  width: 130,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Kode Undangan:', style: TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                                      Text(inviteCode, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                OutlinedButton.icon(
+                                  onPressed: () => notifier.regenerateInvite(hh.id),
+                                  icon: const Icon(Icons.send_outlined, size: 14),
+                                  label: const Text('Kirim Kode', style: TextStyle(fontSize: 11)),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF0D9488),
+                                    side: const BorderSide(color: Color(0xFF99F6E4)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -333,7 +373,34 @@ class _RtDataPageState extends ConsumerState<RtDataPage> with SingleTickerProvid
                     'Format: nomor,nama_kk,alamat,telepon,blok. Validasi per baris akan diperiksa oleh server.',
                     style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.file_copy_outlined, size: 14),
+                        label: const Text('Template Standar (Valid)', style: TextStyle(fontSize: 11)),
+                        onPressed: () {
+                          csvController.text = 'nomor,nama_kk,alamat,telepon,blok\n'
+                              'B-01,Suprapto,Jl. Kenanga No 10,081234567891,Blok B\n'
+                              'B-02,Hartono,Jl. Kenanga No 12,081234567892,Blok B\n'
+                              'B-03,Kusuma,Jl. Kenanga No 14,081234567893,Blok B\n';
+                        },
+                      ),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.bug_report_outlined, size: 14),
+                        label: const Text('Contoh Uji Galat', style: TextStyle(fontSize: 11)),
+                        onPressed: () {
+                          csvController.text = 'nomor,nama_kk,alamat,telepon,blok\n'
+                              'B-01,Suprapto,Jl. Kenanga No 10,081234567891,Blok B\n'
+                              'B-02,Hartono,Jl. Kenanga No 12,081234567892,Blok B\n'
+                              ',Salah Baris,Jl. Kosong,081234567893,Blok B\n';
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   Expanded(
                     child: TextField(
                       controller: csvController,

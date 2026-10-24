@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ui/ui.dart';
 
 import '../../app/auth_provider.dart';
 import 'region_model.dart';
@@ -200,23 +201,10 @@ class _RegionPageState extends ConsumerState<RegionPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Dashboard Agregat Wilayah (Admin Wilayah)',
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Cakupan Yurisdiksi: $regionScopeName • Akses ${rts.length} RT (FR-MRT, FR-RCP-05)',
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-                    ),
-                  ],
-                ),
-                const Spacer(),
+            OperationalPageHeader(
+              title: 'Dashboard Agregat Wilayah',
+              subtitle: 'Cakupan Yurisdiksi: $regionScopeName • Akses ${rts.length} RT (FR-MRT, FR-RCP-05)',
+              actions: [
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1E3A8A),
@@ -227,7 +215,6 @@ class _RegionPageState extends ConsumerState<RegionPage> {
                   label: const Text('Siarkan Pengumuman Multi-RT'),
                   onPressed: () => _openBroadcastDialog(rts),
                 ),
-                const SizedBox(width: 8),
                 IconButton.outlined(
                   tooltip: 'Muat ulang data agregat',
                   icon: const Icon(Icons.refresh, size: 20),
@@ -286,18 +273,45 @@ class _RegionPageState extends ConsumerState<RegionPage> {
             ],
 
             // Aggregate Metric Cards
-            Row(
-              children: [
-                _buildMetricCard('Total RT Terdaftar', '${agg?.totalRTs ?? rts.length}', Icons.location_city, const Color(0xFF3B82F6)),
-                const SizedBox(width: 14),
-                _buildMetricCard('Insiden Darurat Aktif', '${agg?.activeIncidents ?? 1}', Icons.warning_amber, const Color(0xFFDC2626)),
-                const SizedBox(width: 14),
-                _buildMetricCard('Total Kepala Keluarga', '$totalKK KK', Icons.home_work, const Color(0xFF64748B)),
-                const SizedBox(width: 14),
-                _buildMetricCard('Butuh Bantuan / Kritis', '${needHelpCount + criticalCount} KK', Icons.medical_services, const Color(0xFFEA580C)),
-                const SizedBox(width: 14),
-                _buildMetricCard('Rentan Belum Terjangkau', '${agg?.vulnerableUnreached ?? 0} Jiwa', Icons.accessibility_new, const Color(0xFFB91C1C)),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final totalWidth = constraints.maxWidth;
+                final c1 = _buildMetricCardContent('Total RT Terdaftar', '${agg?.totalRTs ?? rts.length}', Icons.location_city, const Color(0xFF3B82F6));
+                final c2 = _buildMetricCardContent('Insiden Darurat Aktif', '${agg?.activeIncidents ?? 1}', Icons.warning_amber, const Color(0xFFDC2626));
+                final c3 = _buildMetricCardContent('Total Kepala Keluarga', '$totalKK KK', Icons.home_work, const Color(0xFF64748B));
+                final c4 = _buildMetricCardContent('Butuh Bantuan / Kritis', '${needHelpCount + criticalCount} KK', Icons.medical_services, const Color(0xFFEA580C));
+                final c5 = _buildMetricCardContent('Rentan Belum Terjangkau', '${agg?.vulnerableUnreached ?? 0} Jiwa', Icons.accessibility_new, const Color(0xFFB91C1C));
+
+                if (totalWidth >= 1050) {
+                  return Row(
+                    children: [
+                      Expanded(child: c1),
+                      const SizedBox(width: 12),
+                      Expanded(child: c2),
+                      const SizedBox(width: 12),
+                      Expanded(child: c3),
+                      const SizedBox(width: 12),
+                      Expanded(child: c4),
+                      const SizedBox(width: 12),
+                      Expanded(child: c5),
+                    ],
+                  );
+                }
+
+                final columns = totalWidth >= 650 ? 3 : 2;
+                final cardWidth = (totalWidth - (columns - 1) * 12) / columns;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    SizedBox(width: cardWidth, child: c1),
+                    SizedBox(width: cardWidth, child: c2),
+                    SizedBox(width: cardWidth, child: c3),
+                    SizedBox(width: cardWidth, child: c4),
+                    SizedBox(width: cardWidth, child: c5),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
 
@@ -413,29 +427,34 @@ class _RegionPageState extends ConsumerState<RegionPage> {
     );
   }
 
-  Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500)),
-                Icon(icon, size: 20, color: color),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-          ],
-        ),
+  Widget _buildMetricCardContent(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Icon(icon, size: 20, color: color),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+        ],
       ),
     );
   }
