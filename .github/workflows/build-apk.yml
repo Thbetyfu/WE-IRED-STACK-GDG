@@ -1,0 +1,55 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-apk:
+    name: Build Android APK (Split per ABI)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Set up Melos
+        run: dart pub global activate melos
+
+      - name: Bootstrap Workspace
+        run: melos bootstrap
+
+      - name: Build Warga APK
+        run: |
+          cd apps/warga
+          flutter build apk --split-per-abi
+
+      - name: Build Relawan APK
+        run: |
+          cd apps/relawan
+          flutter build apk --split-per-abi
+
+      - name: Upload Warga Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: warga-apk
+          path: apps/warga/build/app/outputs/flutter-apk/*.apk
+
+      - name: Upload Relawan Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: relawan-apk
+          path: apps/relawan/build/app/outputs/flutter-apk/*.apk

@@ -1,0 +1,23 @@
+name: core
+description: Paket logika inti, API client, Drift DB, outbox, dan model data WE-IRED.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  dio: ^5.7.0
+  drift: ^2.20.0
+  sqlite3_flutter_libs: ^0.5.24
+  web_socket_channel: ^3.0.1
+  flutter_secure_storage: ^9.2.2
+  cryptography: ^2.7.2
+  uuid: ^4.5.1
+  intl: ^0.19.0
+
+dev_dependencies:
+  drift_dev: ^2.20.0
+  build_runner: ^2.4.13
+  test: ^1.24.0
+  lints: ^4.0.0

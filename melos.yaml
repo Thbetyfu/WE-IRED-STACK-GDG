@@ -1,0 +1,19 @@
+name: we_ired
+repository: https://github.com/Thbetyfu/WE-IRED-STACK-GDG
+
+packages:
+  - apps/**
+  - packages/**
+
+command:
+  bootstrap:
+    usePubspecOverrides: true
+
+scripts:
+  analyze:
+    exec: flutter analyze
+    description: Run flutter analyze across all packages and apps.
+
+  test:
+    exec: flutter test
+    description: Run flutter test across all packages and apps.

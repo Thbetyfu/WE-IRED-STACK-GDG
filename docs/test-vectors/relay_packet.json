@@ -1,0 +1,51 @@
+{
+  "description": "Vektor uji codec paket laporan relay WE-IRED (SDD 7.2)",
+  "test_cases": [
+    {
+      "name": "Laporan Butuh Bantuan Kritis dengan Lokasi",
+      "version": 1,
+      "type": 1,
+      "household_short_id_hex": "0102030405060708",
+      "incident_short_id": 1001,
+      "seq": 1,
+      "created_at_unix": 1774360160,
+      "status": 3,
+      "urgency": 2,
+      "needs": 3,
+      "member_mask": 5,
+      "battery": 85,
+      "flags": 1,
+      "lat_e6": -6917464,
+      "lon_e6": 107619123,
+      "ttl": 6,
+      "hop_count": 0,
+      "household_key_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+      "expected_mac_hex": "fbd0eab03294f0e2",
+      "path_node_ids": [12, 34],
+      "expected_packet_hex": "01010102030405060708e9030000010000006096c269030203055501e87396ffb3c02a060600fbd0eab03294f0e20c002200"
+    },
+    {
+      "name": "Laporan Aman di Titik Kumpul via Beacon Check-in",
+      "version": 1,
+      "type": 1,
+      "household_short_id_hex": "aabbccddeeff0011",
+      "incident_short_id": 2002,
+      "seq": 2,
+      "created_at_unix": 1774360660,
+      "status": 2,
+      "urgency": 0,
+      "needs": 0,
+      "member_mask": 0,
+      "battery": 100,
+      "flags": 4,
+      "lat_e6": 0,
+      "lon_e6": 0,
+      "ttl": 5,
+      "hop_count": 1,
+      "household_key_hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "expected_mac_hex": "d8794439590b1c9d",
+      "path_node_ids": [],
+      "expected_packet_hex": "0101aabbccddeeff0011d2070000020000005498c26902000000640400000000000000000501d8794439590b1c9d"
+    }
+  ]
+}

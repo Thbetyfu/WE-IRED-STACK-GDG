@@ -1,0 +1,100 @@
+version: "3.8"
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: weired-cloud-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../apps/dashboard/build/web:/srv/dashboard:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    networks:
+      - weired-cloud-net
+
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: weired/backend:latest
+    container_name: weired-cloud-api
+    restart: unless-stopped
+    command: ["--mode=cloud", "--role=api", "--migrate=true"]
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - MODE=cloud
+      - ROLE=api
+      - DATABASE_URL=postgres://weired_user:weired_secret@postgres:5432/weired_db?sslmode=disable
+      - JWT_SECRET=super-secret-jwt-key-cloud-production-gdg-2026
+      - APP_KEY=12345678901234567890123456789012
+      - RATE_LIMIT_RPS=300
+      - RATE_LIMIT_BURST=600
+      - CORS_ALLOWED_ORIGINS=*
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - weired-cloud-net
+
+  worker:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: weired/backend:latest
+    container_name: weired-cloud-worker
+    restart: unless-stopped
+    command: ["--mode=cloud", "--role=worker"]
+    environment:
+      - MODE=cloud
+      - ROLE=worker
+      - DATABASE_URL=postgres://weired_user:weired_secret@postgres:5432/weired_db?sslmode=disable
+      - JWT_SECRET=super-secret-jwt-key-cloud-production-gdg-2026
+      - APP_KEY=12345678901234567890123456789012
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - weired-cloud-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: weired-cloud-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=weired_user
+      - POSTGRES_PASSWORD=weired_secret
+      - POSTGRES_DB=weired_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U weired_user -d weired_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - weired-cloud-net
+
+volumes:
+  pgdata:
+    name: weired-cloud-pgdata
+  caddy_data:
+    name: weired-cloud-caddy-data
+  caddy_config:
+    name: weired-cloud-caddy-config
+
+networks:
+  weired-cloud-net:
+    name: weired-cloud-network
+    driver: bridge

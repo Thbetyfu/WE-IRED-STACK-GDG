@@ -1,0 +1,33 @@
+name: relawan
+description: Aplikasi Relawan WE-IRED untuk penjangkauan warga dan relay data offline.
+version: 0.1.0+1
+publish_to: none
+
+environment:
+  sdk: ^3.5.0
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1
+  go_router: ^14.2.7
+  core:
+    path: ../../packages/core
+  ble_relay:
+    path: ../../packages/ble_relay
+  ui:
+    path: ../../packages/ui
+  content:
+    path: ../../packages/content
+  geolocator: ^13.0.1
+  mobile_scanner: ^5.2.3
+  firebase_messaging: ^15.1.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

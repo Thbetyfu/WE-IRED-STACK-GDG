@@ -1,0 +1,11 @@
+{
+  "name": "WE-IRED Dashboard Pengurus & Posko",
+  "short_name": "WE-IRED",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#1E3A8A",
+  "description": "Dashboard Operasi Bencana, Triase, Peta Spasial, dan Posko Lokal WE-IRED",
+  "orientation": "landscape-primary",
+  "prefer_related_applications": false
+}

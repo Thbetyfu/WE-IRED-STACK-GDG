@@ -1,0 +1,77 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: weired/backend:latest
+    container_name: weired-posko-api
+    restart: unless-stopped
+    command: ["--mode=posko", "--role=all", "--migrate=true"]
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    environment:
+      - PORT=8080
+      - MODE=posko
+      - ROLE=all
+      - POSKO_ID=posko-lokal-01
+      - DATABASE_URL=postgres://posko_user:posko_secret@postgres:5432/weired_posko?sslmode=disable
+      - JWT_SECRET=super-secret-jwt-key-posko-lokal-gdg-2026
+      - APP_KEY=12345678901234567890123456789012
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - AI_PROVIDER=ollama
+      - RATE_LIMIT_RPS=300
+      - RATE_LIMIT_BURST=600
+      - CORS_ALLOWED_ORIGINS=*
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - weired-posko-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: weired-posko-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=posko_user
+      - POSTGRES_PASSWORD=posko_secret
+      - POSTGRES_DB=weired_posko
+    volumes:
+      - posko_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U posko_user -d weired_posko"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - weired-posko-net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: weired-posko-ollama
+    restart: unless-stopped
+    profiles:
+      - ai
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - weired-posko-net
+
+volumes:
+  posko_pgdata:
+    name: weired-posko-pgdata
+  ollama_data:
+    name: weired-posko-ollama-data
+
+networks:
+  weired-posko-net:
+    name: weired-posko-network
+    driver: bridge

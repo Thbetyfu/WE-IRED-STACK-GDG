@@ -1,0 +1,79 @@
+# Caddyfile for WE-IRED Stack Cloud & Local Reverse Proxy
+# SDD Section 12.1 & NFR-SEC-01
+
+{
+    # Global options
+    admin off
+    log {
+        output stdout
+        format json
+    }
+}
+
+# 1. Production / Staging Domain (Cloud VPS)
+# When deploying to domain, replace with your actual domain e.g. api.weired.id
+{$SERVER_NAME:localhost} {
+    # TLS configuration: auto-HTTPS or internal CA for staging/local
+    tls {$TLS_MODE:internal}
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # WebSockets for Real-time Incident Sync (FR-SYNC & SDD 9.5)
+    @websockets {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    handle @websockets {
+        reverse_proxy api:8080
+    }
+
+    # API Endpoints, Webhooks, Metrics, and Sync
+    handle /api/* {
+        reverse_proxy api:8080
+    }
+    handle /incidents/* {
+        reverse_proxy api:8080
+    }
+    handle /rts/* {
+        reverse_proxy api:8080
+    }
+    handle /sync/* {
+        reverse_proxy api:8080
+    }
+    handle /households/* {
+        reverse_proxy api:8080
+    }
+    handle /webhooks/* {
+        reverse_proxy api:8080
+    }
+    handle /posko/* {
+        reverse_proxy api:8080
+    }
+    handle /auth/* {
+        reverse_proxy api:8080
+    }
+    handle /metrics {
+        reverse_proxy api:8080
+    }
+    handle /health {
+        reverse_proxy api:8080
+    }
+
+    # Dashboard Web SPA (Flutter Web build served from /srv/dashboard)
+    handle {
+        root * /srv/dashboard
+        file_server
+        try_files {path} /index.html
+    }
+}
+
+# 2. Posko Local mDNS and LAN Fallback (HTTP / HTTPS internal)
+http://weired-posko.local, http://192.168.4.1 {
+    reverse_proxy api:8080
+}

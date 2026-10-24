@@ -1,0 +1,23 @@
+{
+  "description": "Vektor uji pengumuman bertanda tangan Ed25519 (SDD 7.6)",
+  "test_cases": [
+    {
+      "name": "Pengumuman Darurat Banjir RT 44001",
+      "version": 1,
+      "type": "0x10",
+      "rt_short_id": 44001,
+      "ann_short_id": 101,
+      "level": "darurat",
+      "level_byte": 3,
+      "created_at_unix": 1792836000,
+      "expires_at_unix": 1792850400,
+      "text": "Air sungai meluap 1.5m. Segera evakuasi ke Balai RW 05!",
+      "text_len": 55,
+      "private_key_seed_hex": "0101010101010101010101010101010101010101010101010101010101010101",
+      "public_key_hex": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+      "expected_packet_len": 139,
+      "expected_packet_hex": "0110e1ab00006500000003a081dc6ae0b9dc6a374169722073756e676169206d656c75617020312e356d2e20536567657261206576616b75617369206b652042616c616920525720303521d54f28fcc4f18eaec2f6b239b64e1efb9dbfbd3ac12942ee315c67df52bff1523d4ad7668690d47467971b0d4047bed9933f445435001b83f70b84cc4a96e208",
+      "expected_signature_hex": "d54f28fcc4f18eaec2f6b239b64e1efb9dbfbd3ac12942ee315c67df52bff1523d4ad7668690d47467971b0d4047bed9933f445435001b83f70b84cc4a96e208"
+    }
+  ]
+}
