@@ -12,11 +12,15 @@ class AppError {
   });
 
   factory AppError.fromJson(Map<String, dynamic> json) {
-    final errorObj = json['error'] as Map<String, dynamic>? ?? json;
+    final rawError = json['error'];
+    final Map<String, dynamic> errorObj = rawError is Map
+        ? Map<String, dynamic>.from(rawError)
+        : json;
+    final rawDetails = errorObj['details'];
     return AppError(
       code: errorObj['code'] as String? ?? 'UNKNOWN_ERROR',
       message: errorObj['message'] as String? ?? 'Terjadi kesalahan sistem',
-      details: errorObj['details'] as Map<String, dynamic>?,
+      details: rawDetails is Map ? Map<String, dynamic>.from(rawDetails) : null,
     );
   }
 

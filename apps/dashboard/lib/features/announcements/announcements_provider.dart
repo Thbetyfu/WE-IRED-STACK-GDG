@@ -165,13 +165,6 @@ class AnnouncementsNotifier extends StateNotifier<AnnouncementsState> {
         signature: 'b64ed25519sig-info-valid',
         channels: const ['push', 'relay'],
       ),
-        shortID: 102,
-        level: AnnouncementLevel.info,
-        text: 'Dapur umum posko telah beroperasi di Balai RW 05. Logistik balita dan lansia tersedia.',
-        expiresAt: now.add(const Duration(hours: 12)),
-        signature: 'b64ed25519sig-info-valid',
-        channels: const ['push', 'relay'],
-      ),
     ];
 
     state = state.copyWith(

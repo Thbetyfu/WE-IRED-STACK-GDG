@@ -23,9 +23,9 @@ class ApiException implements Exception {
 class ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    if (err.response?.data != null && err.response?.data is Map<String, dynamic>) {
+    if (err.response?.data != null && err.response?.data is Map) {
       try {
-        final data = err.response!.data as Map<String, dynamic>;
+        final data = Map<String, dynamic>.from(err.response!.data as Map);
         final appError = AppError.fromJson(data);
         final apiException = ApiException(
           statusCode: err.response?.statusCode ?? 500,

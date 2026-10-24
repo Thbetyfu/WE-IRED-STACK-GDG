@@ -121,22 +121,22 @@ class AnnouncementsPage extends ConsumerWidget {
       color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       elevation: 0,
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 32, vertical: 64),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 64),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.campaign_outlined, size: 64, color: Color(0xFF94A3B8)),
-              SizedBox(height: 16),
-              Text(
+              const Icon(Icons.campaign_outlined, size: 64, color: Color(0xFF94A3B8)),
+              const SizedBox(height: 16),
+              const Text(
                 'Belum Ada Pengumuman Aktif di RT Ini',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: 460),
-                child: Text(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: const Text(
                   'Pengumuman darurat, penting, atau informasi posko yang disiarkan oleh pengurus akan muncul di sini dan disinkronkan ke seluruh warga.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.5),
@@ -187,7 +187,6 @@ class _AnnouncementCard extends StatelessWidget {
         badgeLabel = 'PENTING';
         break;
       case AnnouncementLevel.info:
-      default:
         badgeBg = const Color(0xFFEFF6FF);
         badgeText = const Color(0xFF2563EB);
         badgeIcon = Icons.info_outline_rounded;
@@ -654,7 +653,6 @@ class _LevelRadio extends StatelessWidget {
         color = const Color(0xFFD97706);
         break;
       case AnnouncementLevel.info:
-      default:
         color = const Color(0xFF2563EB);
         break;
     }
@@ -665,7 +663,7 @@ class _LevelRadio extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.12) : const Color(0xFFF8FAFC),
+          color: isSelected ? color.withValues(alpha: 0.12) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(color: isSelected ? color : const Color(0xFFCBD5E1), width: isSelected ? 1.5 : 1),
         ),

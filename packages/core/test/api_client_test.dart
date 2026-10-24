@@ -66,6 +66,7 @@ void main() {
                   },
                 ),
               ),
+              true,
             );
           },
         ),
@@ -131,6 +132,7 @@ void main() {
                   response: Response(requestOptions: options, statusCode: 401),
                   type: DioExceptionType.badResponse,
                 ),
+                true,
               );
             } else {
               // Second attempt after refresh succeeds

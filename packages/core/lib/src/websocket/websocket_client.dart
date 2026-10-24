@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../auth/secure_storage.dart';
 import 'ws_event.dart';

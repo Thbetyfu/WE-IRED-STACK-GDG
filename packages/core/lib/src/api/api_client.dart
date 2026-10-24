@@ -28,14 +28,15 @@ class ApiClient {
                 },
               ),
             ) {
-    dio.interceptors.addAll([
+    dio.interceptors.insert(
+      0,
       AuthInterceptor(
         dio: dio,
         sessionStorage: sessionStorage,
         onSessionExpired: onSessionExpired,
       ),
-      ErrorInterceptor(),
-    ]);
+    );
+    dio.interceptors.add(ErrorInterceptor());
   }
 
   void setBaseUrl(String newUrl) {
@@ -43,6 +44,101 @@ class ApiClient {
   }
 
   String get baseUrl => dio.options.baseUrl;
+
+  // Generic HTTP methods
+  Future<Response<T>> get<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    ProgressCallback? onReceiveProgress,
+  }) {
+    return dio.get<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+      onReceiveProgress: onReceiveProgress,
+    );
+  }
+
+  Future<Response<T>> post<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) {
+    return dio.post<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+  }
+
+  Future<Response<T>> put<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) {
+    return dio.put<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+  }
+
+  Future<Response<T>> patch<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) {
+    return dio.patch<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+  }
+
+  Future<Response<T>> delete<T>(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) {
+    return dio.delete<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
 
   // Health check for endpoint detection (SDD 8.1, FR-SYNC-04)
   Future<Map<String, dynamic>> checkHealth({Duration timeout = const Duration(seconds: 3)}) async {
@@ -118,7 +214,7 @@ class ApiClient {
         'reports': reports.map((r) => r.toJson()).toList(),
       },
     );
-    return response.data as Map<String, dynamic>;
+    return Map<String, dynamic>.from(response.data as Map);
   }
 
   Future<Map<String, dynamic>> syncRelayPackets(List<Map<String, dynamic>> packets) async {
@@ -128,7 +224,7 @@ class ApiClient {
         'packets': packets,
       },
     );
-    return response.data as Map<String, dynamic>;
+    return Map<String, dynamic>.from(response.data as Map);
   }
 
   Future<Map<String, dynamic>> fetchSnapshot({String scope = 'household'}) async {
@@ -136,6 +232,6 @@ class ApiClient {
       Endpoints.syncSnapshot,
       queryParameters: {'scope': scope},
     );
-    return response.data as Map<String, dynamic>;
+    return Map<String, dynamic>.from(response.data as Map);
   }
 }

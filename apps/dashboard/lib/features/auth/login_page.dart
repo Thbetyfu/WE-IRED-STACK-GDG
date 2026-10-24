@@ -23,7 +23,6 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
   final _phoneController = TextEditingController(text: '+628123456789');
   final _otpController = TextEditingController();
   bool _otpSent = false;
-  int _countdown = 0;
 
   @override
   void initState() {
@@ -71,7 +70,6 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
     if (success && mounted) {
       setState(() {
         _otpSent = true;
-        _countdown = 300; // 5 minutes
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Kode OTP telah dikirim melalui WhatsApp')),
@@ -113,7 +111,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.2),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),

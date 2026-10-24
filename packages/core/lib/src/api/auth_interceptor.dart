@@ -23,6 +23,7 @@ class AuthInterceptor extends Interceptor {
     if (options.path.contains('/auth/login') ||
         options.path.contains('/auth/otp') ||
         options.path.contains('/auth/activate') ||
+        options.path.contains(Endpoints.authRefresh) ||
         options.path.contains('/healthz')) {
       return handler.next(options);
     }
@@ -70,15 +71,13 @@ class AuthInterceptor extends Interceptor {
         throw StateError('No refresh token available');
       }
 
-      // Use a clean Dio instance to avoid interceptor recursion
-      final refreshDio = Dio(BaseOptions(baseUrl: dio.options.baseUrl));
-      final response = await refreshDio.post(
+      final response = await dio.post(
         Endpoints.authRefresh,
         data: {'refresh_token': currentRefreshToken},
       );
 
-      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
-        final data = response.data as Map<String, dynamic>;
+      if (response.statusCode == 200 && response.data is Map) {
+        final data = Map<String, dynamic>.from(response.data as Map);
         final newAccessToken = data['access_token'] as String;
         final newRefreshToken = data['refresh_token'] as String;
         final expiresAt = DateTime.now().add(const Duration(minutes: 15));

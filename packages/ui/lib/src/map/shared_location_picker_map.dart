@@ -102,7 +102,7 @@ class _SharedLocationPickerMapState extends State<SharedLocationPickerMap> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.92),
+                color: Colors.white.withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: const [
                   BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),

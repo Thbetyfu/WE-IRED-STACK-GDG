@@ -6,6 +6,7 @@ abstract class SessionStorage {
   Future<void> saveSession(Session session);
   Future<Session?> getSession();
   Future<void> clearSession();
+  Future<void> clear();
 
   Future<void> saveTokens({required String accessToken, required String refreshToken, required DateTime expiresAt});
   Future<String?> getAccessToken();
@@ -59,6 +60,9 @@ class SecureSessionStorage implements SessionStorage {
     await _storage.delete(key: _keyRefreshToken);
     await _storage.delete(key: _keyHouseholdKey);
   }
+
+  @override
+  Future<void> clear() => clearSession();
 
   @override
   Future<void> saveTokens({
@@ -121,6 +125,9 @@ class MemorySessionStorage implements SessionStorage {
   Future<void> clearSession() async {
     _data.clear();
   }
+
+  @override
+  Future<void> clear() => clearSession();
 
   @override
   Future<void> saveTokens({

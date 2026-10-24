@@ -44,14 +44,20 @@ class User {
   final String phone;
   final String? email;
   final DateTime createdAt;
+  final String? role;
+  final String? regionId;
+  final String? householdId;
 
-  const User({
+  User({
     required this.id,
     required this.name,
     required this.phone,
     this.email,
-    required this.createdAt,
-  });
+    DateTime? createdAt,
+    this.role,
+    this.regionId,
+    this.householdId,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -59,7 +65,12 @@ class User {
       name: json['name'] as String,
       phone: json['phone'] as String,
       email: json['email'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+      role: json['role'] as String?,
+      regionId: json['region_id'] as String?,
+      householdId: json['household_id'] as String?,
     );
   }
 
@@ -70,6 +81,9 @@ class User {
       'phone': phone,
       if (email != null) 'email': email,
       'created_at': createdAt.toIso8601String(),
+      if (role != null) 'role': role,
+      if (regionId != null) 'region_id': regionId,
+      if (householdId != null) 'household_id': householdId,
     };
   }
 }

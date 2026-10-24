@@ -498,7 +498,7 @@ class _IncidentOverviewPageState extends ConsumerState<IncidentOverviewPage> {
                 const Text('Pilih parameter aktivasi tanggap darurat untuk RT ini:', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<HazardType>(
-                  value: selectedHazard,
+                  initialValue: selectedHazard,
                   decoration: const InputDecoration(labelText: 'Jenis Bencana', border: OutlineInputBorder()),
                   items: HazardType.values.map((h) {
                     return DropdownMenuItem(value: h, child: Text(h.name.toUpperCase()));
@@ -509,7 +509,7 @@ class _IncidentOverviewPageState extends ConsumerState<IncidentOverviewPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<IncidentMode>(
-                  value: selectedMode,
+                  initialValue: selectedMode,
                   decoration: const InputDecoration(labelText: 'Mode Insiden', border: OutlineInputBorder()),
                   items: const [
                     DropdownMenuItem(value: IncidentMode.nyata, child: Text('NYATA (Operasi Darurat Bencana)')),

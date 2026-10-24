@@ -14,6 +14,8 @@ class AuthState {
   final Region? selectedRT;
   final String connectionMode; // 'cloud', 'posko', 'offline'
   final String? errorMessage;
+  final String baseUrl;
+  final ApiClient? apiClient;
 
   const AuthState({
     this.isAuthenticated = false,
@@ -28,6 +30,8 @@ class AuthState {
     this.selectedRT,
     this.connectionMode = 'cloud',
     this.errorMessage,
+    this.baseUrl = 'http://localhost:8080/api/v1',
+    this.apiClient,
   });
 
   AuthState copyWith({
@@ -43,6 +47,8 @@ class AuthState {
     Region? selectedRT,
     String? connectionMode,
     String? errorMessage,
+    String? baseUrl,
+    ApiClient? apiClient,
   }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
@@ -57,6 +63,8 @@ class AuthState {
       selectedRT: selectedRT ?? this.selectedRT,
       connectionMode: connectionMode ?? this.connectionMode,
       errorMessage: errorMessage,
+      baseUrl: baseUrl ?? this.baseUrl,
+      apiClient: apiClient ?? this.apiClient,
     );
   }
 }
@@ -68,7 +76,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier({
     this.apiClient,
     this.sessionStorage,
-  }) : super(const AuthState());
+  }) : super(AuthState(
+          apiClient: apiClient,
+          baseUrl: apiClient?.baseUrl ?? 'http://localhost:8080/api/v1',
+        ));
 
   /// Log in via Email and Argon2id Password (FR-AUTH-02).
   Future<bool> loginWithPassword(String email, String password) async {
@@ -91,19 +102,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
           name: userData['name'] as String,
           phone: userData['phone'] as String,
           email: userData['email'] as String?,
-          role: userData['role'] as String,
-          regionId: userData['region_id'] as String,
+          role: userData['role'] as String?,
+          regionId: userData['region_id'] as String?,
           householdId: userData['household_id'] as String?,
+          createdAt: DateTime.now(),
         );
 
         if (sessionStorage != null) {
-          await sessionStorage!.saveSession(AuthSession(
-            token: accessToken,
-            refreshToken: refreshToken,
-            user: user,
-            role: user.role,
-            regionId: user.regionId,
+          await sessionStorage!.saveSession(Session(
+            userId: user.id,
+            name: user.name,
+            phone: user.phone,
+            role: Role.fromString(user.role ?? 'pengurus'),
+            regionId: user.regionId ?? '',
             householdId: user.householdId,
+            accessToken: accessToken,
+            refreshToken: refreshToken,
             expiresAt: DateTime.now().add(const Duration(minutes: 15)),
           ));
         }
@@ -199,9 +213,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
           name: userData['name'] as String,
           phone: userData['phone'] as String,
           email: userData['email'] as String?,
-          role: userData['role'] as String,
-          regionId: userData['region_id'] as String,
+          role: userData['role'] as String?,
+          regionId: userData['region_id'] as String?,
           householdId: userData['household_id'] as String?,
+          createdAt: DateTime.now(),
         );
 
         state = state.copyWith(
@@ -283,11 +298,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         });
       }
       if (sessionStorage != null) {
-        await sessionStorage!.clear();
+        await sessionStorage!.clearSession();
       }
     } catch (_) {}
 
-    state = const AuthState();
+    state = AuthState(
+      apiClient: apiClient,
+      baseUrl: apiClient?.baseUrl ?? 'http://localhost:8080/api/v1',
+    );
   }
 }
 

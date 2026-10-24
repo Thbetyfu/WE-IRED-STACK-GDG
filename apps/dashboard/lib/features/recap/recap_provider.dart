@@ -478,9 +478,9 @@ class RecapNotifier extends StateNotifier<RecapState> {
 
 final recapProvider = StateNotifierProvider<RecapNotifier, RecapState>((ref) {
   final authState = ref.watch(authProvider);
-  final notifier = RecapNotifier();
+  final notifier = RecapNotifier(apiClient: authState.apiClient);
   // By default load the latest incident or placeholder
-  final activeIncId = 'inc-active-01';
+  const activeIncId = 'inc-active-01';
   notifier.loadRecap(activeIncId);
   return notifier;
 });

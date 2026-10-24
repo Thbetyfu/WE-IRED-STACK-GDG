@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/auth_provider.dart';
-import 'posko_model.dart';
 import 'posko_provider.dart';
 
 class PoskoPage extends ConsumerStatefulWidget {

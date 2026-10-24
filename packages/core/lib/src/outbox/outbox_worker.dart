@@ -50,7 +50,7 @@ class OutboxWorker {
   }
 
   Future<void> processPendingOutbox() async {
-    if (_isProcessing || !_running) return;
+    if (_isProcessing) return;
 
     // Verify active connection exists (Cloud or Posko)
     if (!endpointDetector.currentEndpoint.isHealthy) {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:core/core.dart';
 import 'package:ui/ui.dart';
 
 import '../../app/auth_provider.dart';
@@ -486,9 +485,9 @@ class _RtDataPageState extends ConsumerState<RtDataPage> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -608,7 +607,7 @@ class _RtDataPageState extends ConsumerState<RtDataPage> with SingleTickerProvid
                                       const SizedBox(width: 8),
                                       Switch(
                                         value: v.available,
-                                        activeColor: const Color(0xFF0D9488),
+                                        activeThumbColor: const Color(0xFF0D9488),
                                         onChanged: (_) => notifier.toggleVolunteerAvailability(rtId, v.userId, v.available),
                                       ),
                                     ],

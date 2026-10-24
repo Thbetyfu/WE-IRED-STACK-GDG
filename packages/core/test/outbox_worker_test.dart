@@ -86,9 +86,9 @@ void main() {
       mockDio.interceptors.add(
         InterceptorsWrapper(
           onRequest: (options, handler) {
-            if (options.path == Endpoints.healthz) {
+            if (options.path.endsWith(Endpoints.healthz)) {
               handler.resolve(Response(requestOptions: options, statusCode: 200, data: {'status': 'ok'}));
-            } else if (options.path == Endpoints.syncReports) {
+            } else if (options.path.endsWith(Endpoints.syncReports)) {
               handler.resolve(
                 Response(
                   requestOptions: options,
@@ -100,6 +100,8 @@ void main() {
                   },
                 ),
               );
+            } else {
+              handler.next(options);
             }
           },
         ),
@@ -144,9 +146,9 @@ void main() {
       mockDio.interceptors.add(
         InterceptorsWrapper(
           onRequest: (options, handler) {
-            if (options.path == Endpoints.healthz) {
+            if (options.path.endsWith(Endpoints.healthz)) {
               handler.resolve(Response(requestOptions: options, statusCode: 200, data: {'status': 'ok'}));
-            } else if (options.path == Endpoints.syncReports) {
+            } else if (options.path.endsWith(Endpoints.syncReports)) {
               // Server returns internal error (500)
               handler.reject(
                 DioException(
@@ -155,6 +157,8 @@ void main() {
                   type: DioExceptionType.badResponse,
                 ),
               );
+            } else {
+              handler.next(options);
             }
           },
         ),
@@ -201,9 +205,9 @@ void main() {
       mockDio.interceptors.add(
         InterceptorsWrapper(
           onRequest: (options, handler) {
-            if (options.path == Endpoints.healthz) {
+            if (options.path.endsWith(Endpoints.healthz)) {
               handler.resolve(Response(requestOptions: options, statusCode: 200, data: {'status': 'ok'}));
-            } else if (options.path == Endpoints.syncReports) {
+            } else if (options.path.endsWith(Endpoints.syncReports)) {
               // Server reports report was already recorded (idempotent duplicate)
               handler.resolve(
                 Response(
@@ -216,6 +220,8 @@ void main() {
                   },
                 ),
               );
+            } else {
+              handler.next(options);
             }
           },
         ),

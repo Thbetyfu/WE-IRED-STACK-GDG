@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -21,12 +20,11 @@ import '../features/audit/audit_page.dart';
 import '../features/posko/posko_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authNotifier = ref.watch(authProvider.notifier);
+  final authState = ref.watch(authProvider);
 
   return GoRouter(
     initialLocation: '/incidents',
     redirect: (context, state) {
-      final authState = ref.read(authProvider);
       final isLoggingIn = state.uri.path == '/login';
 
       // 1. Unauthenticated users must log in
